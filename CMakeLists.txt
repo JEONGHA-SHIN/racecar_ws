@@ -3,6 +3,7 @@ project(racecar_ws)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -47,6 +48,14 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .msg/.srv/.action file to be processed
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
+
+set(SDK_PATH "./sdk/")
+
+FILE(GLOB SDK_SRC 
+  "${SDK_PATH}/src/impl/unix/*.cpp"
+  "${SDK_PATH}/src/*.cpp"
+  "${SDK_PATH}/src/*.c"
+)
 
 ## Generate messages in the 'msg' folder
 add_message_files(
@@ -120,6 +129,9 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/sdk/include
+  ${PROJECT_SOURCE_DIR}/sdk/src
 )
 
 ## Declare a C++ library
@@ -206,3 +218,19 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(lidar_node src/lidar_node.cpp ${SDK_SRC})
+target_link_libraries(lidar_node ${catkin_LIBRARIES})
+add_dependencies(lidar_node racecar_ws_generate_messages_cpp)
+
+install(TARGETS lidar_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+
+install(DIRECTORY launch startup sdk
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  USE_SOURCE_PERMISSIONS
+)
