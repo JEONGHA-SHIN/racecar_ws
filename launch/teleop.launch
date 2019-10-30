@@ -8,7 +8,7 @@
   <node pkg="racecar_ws" name="cmd_vel_mux" type="cmd_vel_mux.py" output="screen" />
   <node pkg="racecar_ws" name="gamepad" type="gamepad.py" output="screen" />
   <node pkg="racecar_ws" name="simple_camera" type="simple_camera.py" output="screen" />
-
+  <node pkg="racecar_ws" name="driveNode" type="driveNode.py" output="screen" />
 
   <!-- Uncomment to enable by default -->
   <!-- <node pkg="racecar_mn" name="simple_camera" type="simple_camera.py" /> -->

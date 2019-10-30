@@ -33,7 +33,7 @@ class driveStop(object):
 		pix_height = self.flag_box[1][1] - self.flag_box[0][1]	
 
 		self.box_size = pix_width*pix_height
-		#print(self.box_size)
+		print(self.box_size)
 	
 	def drive(self):
             self.cmd.drive_angle = 0
