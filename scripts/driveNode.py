@@ -33,7 +33,7 @@ class driveStop(object):
 		pix_height = self.flag_box[1][1] - self.flag_box[0][1]	
 
 		self.box_size = pix_width*pix_height
-		print(self.box_size)
+		#print(self.box_size)
 	
 	def drive(self):
             self.cmd.drive_angle = 0
@@ -54,8 +54,8 @@ class driveStop(object):
 			print("sleeping")
 
 		self.flag_box = cd_color_segmentation(self.cv_image, show_image=False)
-		#cv2.imshow("Image window", self.cv_image)
-    		#cv2.waitKey(3)
+		cv2.imshow("Image window", self.cv_image)
+    		cv2.waitKey(3)
 
 		self.size_calc()
 		if self.box_size < 200000:

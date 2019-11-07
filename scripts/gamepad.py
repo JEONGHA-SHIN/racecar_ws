@@ -15,7 +15,7 @@ def joy_callback(msg):
 	drive.velocity = 0
 
     else: 
-	drive.drive_angle = 255*msg.axes[0] #left && right
+	drive.drive_angle = 255*msg.axes[3] #left && right
 	drive.velocity = 255*msg.axes[1] #front && back
 
 

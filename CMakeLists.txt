@@ -223,6 +223,10 @@ add_executable(lidar_node src/lidar_node.cpp ${SDK_SRC})
 target_link_libraries(lidar_node ${catkin_LIBRARIES})
 add_dependencies(lidar_node racecar_ws_generate_messages_cpp)
 
+#add_executable(camera src/camera.cpp)
+#target_link_libraries(camera ${catkin_LIBRARIES})
+#add_dependencies(camera racecar_ws_generate_messages_cpp)
+
 install(TARGETS lidar_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

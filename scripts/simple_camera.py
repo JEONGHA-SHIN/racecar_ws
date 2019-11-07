@@ -38,37 +38,30 @@ def gstreamer_pipeline(
 
 
 def show_camera():
-    	rospy.init_node('camera')
-    	pub_im = rospy.Publisher('/camera', Image, queue_size=1)
+    	
     	# To flip the image, modify the flip_method parameter (0 and 2 are the most common)
 	#print(gstreamer_pipeline(flip_method=0))
 	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-	#if cap.isOpened():
-        #window_handle = cv2.namedWindow("CSI Camera", cv2.WINDOW_AUTOSIZE)
-        # Window
-	while not rospy.is_shutdown():
-	    	ret_val, img = cap.read()
-	    	#cv2.imshow("CSI Camera", img)
-		msg = Image()
-		msg.height = 720
-		msg.width = 1280
-	        msg.encoding = 'bgr8'
-		msg.is_bigendian = 0
-		msg.step = 3 * 1280
-	 	msg.data = img.flatten().tostring()
-		pub_im.publish(msg)
-	        # This also acts as
-	        keyCode = cv2.waitKey(30) & 0xFF
-	        # Stop the program on the ESC key
-	        if keyCode == 27:
-	        	break
-	cap.release()
+	if cap.isOpened():
+        	while not rospy.is_shutdown():
+	    		ret_val, img = cap.read()
+	    		#cv2.imshow("CSI Camera", img)
+			msg = Image()
+			msg.height = img.shape[0]
+			msg.width = img.shape[1]
+	        	msg.encoding = 'bgr8'
+			msg.is_bigendian = 0
+			msg.step = 3 * msg.width
+	 		msg.data = img.flatten().tostring()
+			pub_im.publish(msg)
+	        
+		cap.release()
         #cv2.destroyAllWindows()
-    #else:
-        #print("Unable to open camera")
+    	else:
+        	print("Unable to open camera")
 
 
 if __name__ == "__main__":
-    show_camera()
-   
-
+	rospy.init_node('camera')
+    	pub_im = rospy.Publisher('/camera', Image, queue_size=1)    
+	show_camera()
