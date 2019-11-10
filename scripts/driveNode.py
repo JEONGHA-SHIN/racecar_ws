@@ -1,107 +1,92 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
+#import libraries and color segmentation code
+import rospy
+import cv2
+import time
 import numpy as np
-import sys, math, random, copy
-import rospy, copy, time
-from sensor_msgs.msg import LaserScan
+from cv_bridge import CvBridge, CvBridgeError
+from color_segmentation import cd_color_segmentation
 from racecar_ws.msg import drive_msg
-from sensor_msgs.msg import Joy
+from sensor_msgs.msg import Joy, Image
 
-AUTONOMOUS_MODE=False
-count = 0
 
-class PotentialField:
+RED = np.array([[0, 44, 147], [8, 254, 255]])
+YELLOW = np.array([[19, 14, 150], [33, 163, 255]])
+BLUE = np.array([[56, 109, 150], [111, 255, 255]])
+
+
+class driveStop(object):
+	"""class that will help the robot drive and stop at certain conditions
+	"""
 	def __init__(self):
-		rospy.init_node("potentialField")
-		self.data = None
+		self.pub = rospy.Publisher('/drive', drive_msg, queue_size = 1)
+		self.bridge = CvBridge()		
+		self.image_sub = rospy.Subscriber('/camera', Image, self.driveStop_car_callback)
+
+		self.flag_box = ((0,0),(0,0))
+		self.flag_center = (0,0)
+		self.flag_size = 0
+
 		self.cmd = drive_msg()
-		self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.scan_callback) 
-		#self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
-		self.drive_pub = rospy.Publisher("/drive", drive_msg, queue_size=1)
-		
-		self.cmd.velocity = 255
 		self.cmd.drive_angle = 0
-		
-		#cartesian points -- to be filled (tuples)
-		self.cartPoints = [None for x in range(720)]
-		
-		#[speed, angle]
-		self.finalVector = [0.5, 0]
-		self.maxTurn = 1
-
-	#def joy_callback(self, msg):
-	#	global AUTONOMOUS_MODE
-
-	#	if msg.buttons[5] == 1:
-	#		AUTONOMOUS_MODE = True #LB >> joy
-	#		self.drive_pub.publish(self.cmd)
-	#	else:
-	#		AUTONOMOUS_MODE = False
-		
+		self.cmd.velocity = 0
 	
-	def scan_callback(self, data):
-		'''Checks LIDAR data'''
-		self.data = data.ranges
-		self.convertPoints(self.data)
-		self.drive_callback()
-		self.drive_pub.publish(self.cmd)
+		self.min_value=0
 
-	def drive_callback(self):
-		'''Publishes drive commands'''
-		self.calcFinalVector(self.cartPoints)
-		self.cmd.velocity = self.finalVector[1]
-		self.cmd.drive_angle = self.finalVector[0]*255
+	def size_calc(self):
+		pix_width = self.flag_box[1][0] - self.flag_box[0][0]
+		pix_height = self.flag_box[1][1] - self.flag_box[0][1]	
 
-	def convertPoints(self, points):
-		'''Convert all current LIDAR data to cartesian coordinates'''
-		for i in range(len(points)):
-			x = points[i] * round(math.sin(math.radians(i/2)),5)
-			y = points[i] * round(math.cos(math.radians(i/2)),5)*-1
-			self.cartPoints[i] = (x,y)
-			
+		self.box_size = pix_width*pix_height
+		#print(self.flag_box)
+	
+		    
+	def driveStop_car_callback(self,data):
+		try:
+	       		self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+     		except CvBridgeError as e:
+       			print(e)
 
-	def calcFinalVector(self, points):
-		'''Calculate the final driving speed and angle'''
-		#a total force[x,y] from current data that will be added to the current velocity
-		force = [0, 0]
-		constant = 0.0001
+		while self.cv_image is None:
+			time.sleep(0.5)
+			print("sleeping")
+
+		self.flag_box = cd_color_segmentation(self.cv_image, show_image=False)
+		cv2.imshow("Image window", self.cv_image)
+    		cv2.waitKey(3)
+
+		self.size_calc()
 		
-		#checks if the data has been initialized
-		if self.data:
-			for pt in points:
-				x, y = pt
-				if x==0:
-					x=constant
-				if y==0:
-					y=constant
-				#adjusts the magnitude of the point's vector to increase the lower values (1/raw_magnitdue^2)
-				mag = 0.1 #constant / (x**2 + y**2)**3
-				force[0] += -x * mag #x dir
-				force[1] += -y * mag #y dir
-
-			#force[0] += 0.3
-			#adjusts the sign depending if it will move backwards or forwards
-			speedSign = 1 if (force[1] + self.finalVector[1]) > 0 else -1
-			#pythagorean theorem to find magnitude
-			self.finalVector[1] += math.sqrt((force[0]**2 + force[1]**2)) * speedSign
-			#arctan to find angle (atan2 returns radians)
-			self.finalVector[0] += math.atan2(force[0], force[1])
-			
-			if abs(self.finalVector[0]) > self.maxTurn:
-				if self.finalVector[0] > 0:
-					self.finalVector[0] = self.maxTurn
+		if self.box_size > 10000: 
+			mid_point = (self.flag_box[1][0] + self.flag_box[0][0])/2
+			#print(mid_point)
+			self.cmd.drive_angle = -(mid_point - 640) * (0.55)
+			if abs(self.cmd.drive_angle) > 255:
+				if self.cmd.drive_angle > 0:
+					self.cmd.drive_angle = 255
 				else:
-					self.finalVector[0] = -self.maxTurn
+					self.cmd.drive_angle = -255
+			
+			self.cmd.velocity = 200
+		else:
+			self.cmd.drive_angle = 0
+			self.cmd.velocity = 0
+	
+		self.pub.publish(self.cmd)
+                
+
+
+def main():
+	ic = driveStop()
+	rospy.init_node('driveStop')
+	try:
+		rospy.spin()
+		#ic.pub.publish(ic.cmd)
+	except KeyboardInterrupt:
+    		print("Shutting down")
+  		cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
-	try:
-		node = PotentialField()
-		rospy.spin()		
-		#while not rospy.is_shutdown():
-			#if AUTONOMOUS_MODE:
-		#	if self.joy_sub.buttons[5]==1
-		#		node.drive_pub.publish(node.cmd)
-		#		count+=1
-		#		print(AUTONOMOUS_MODE)
-	except rospy.ROSInterruptException:
-		exit()
+	main()
