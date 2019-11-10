@@ -12,7 +12,7 @@ mux_mode = ''
 
 
 def scan_callback(msg):
-	print(msg.ranges[360])
+	print(msg.ranges[540])
 
 
 #init ROS
