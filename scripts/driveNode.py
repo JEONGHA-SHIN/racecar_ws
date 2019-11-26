@@ -46,13 +46,13 @@ class PotentialField:
 	def convertPoints(self, points):
 		'''Convert all current LIDAR data to cartesian coordinates'''
 		for i in range(len(points)):
-			if (i>=0 and i <=40) or (i>=680 and i<=719):
+			if (i>=0 and i <=160) or (i>=520 and i<=719):
 				x = 0.25/5 * round(math.sin(math.radians(i/2)),5)
 				y = 0.25/5 * round(math.cos(math.radians(i/2)),5)*-1
 			else:
-				if points[i] > 1.5:
-					x = 1.5/5 * round(math.sin(math.radians(i/2)),5)
-					y = 1.5/5 * round(math.cos(math.radians(i/2)),5)*-1
+				if points[i] > 2.5:
+					x = 2.5/5 * round(math.sin(math.radians(i/2)),5)
+					y = 2.5/5 * round(math.cos(math.radians(i/2)),5)*-1
 				else:
 					x = points[i]/5 * round(math.sin(math.radians(i/2)),5)
 					y = points[i]/5 * round(math.cos(math.radians(i/2)),5)*-1
@@ -62,16 +62,15 @@ class PotentialField:
 		'''Calculate the final driving speed and angle'''
 		#a total force[x,y] from current data that will be added to the current velocity
 		force = [0, 0]
-		constant = 0.0002
 		
 		#checks if the data has been initialized
 		if self.data:
 			for pt in points:
 				x, y = pt
-				if x==0:
-					x = 0.1
-				if y==0: 
-					y = 0.1
+				#if x==0:
+				#	x = 0.1
+				#if y==0: 
+				#	y = 0.1
 				weight = 1 #0.03/(x**2 + y**2)
 				force[0] += x *weight
 				force[1] += y *weight
@@ -86,7 +85,16 @@ class PotentialField:
 			self.finalVector[1] = math.sqrt((force[0]**2 + force[1]**2)) * speedSign *255
 			#force[1] * (4)
 			#arctan to find angle (atan2 returns radians)
-			self.finalVector[0] =  -(math.degrees(math.atan2(force[1], force[0]))+90)/180 *180
+			self.finalVector[0] =  (math.degrees(math.atan2(force[1], force[0]))-90)
+			if abs(self.finalVector[0])<30:
+				self.finalVector[0] = self.finalVector[0]*600
+			elif abs(self.finalVector[0])<45:
+				self.finalVector[0] = self.finalVector[0]*7
+			elif abs(self.finalVector[0])<60:
+				self.finalVector[0] = self.finalVector[0]*8
+			else: 
+				self.finalVector[0] = self.finalVector[0]*10
+			
 			#force[0] * 5
 			
 			if abs(self.finalVector[0]) > self.max:
@@ -99,6 +107,10 @@ class PotentialField:
 					self.finalVector[1] = self.max
 				else:
 					self.finalVector[1] = -self.max
+
+			if self.finalVector[1] <0:
+				self.finalVector[1]*5
+				self.finalVector[0] = 0
 			print( self.finalVector)
 			#print(self.cartPoints[270])
 
