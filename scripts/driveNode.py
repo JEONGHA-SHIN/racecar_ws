@@ -1,92 +1,116 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-#import libraries and color segmentation code
-import rospy
-import cv2
-import time
 import numpy as np
-from cv_bridge import CvBridge, CvBridgeError
-from color_segmentation import cd_color_segmentation
+import sys, math, random, copy
+import rospy, copy, time
+from sensor_msgs.msg import LaserScan
 from racecar_ws.msg import drive_msg
-from sensor_msgs.msg import Joy, Image
+from sensor_msgs.msg import Joy
 
+AUTONOMOUS_MODE=False
+count = 0
 
-RED = np.array([[0, 44, 147], [8, 254, 255]])
-YELLOW = np.array([[19, 14, 150], [33, 163, 255]])
-BLUE = np.array([[56, 109, 150], [111, 255, 255]])
-
-
-class driveStop(object):
-	"""class that will help the robot drive and stop at certain conditions
-	"""
+class PotentialField:
 	def __init__(self):
-		self.pub = rospy.Publisher('/drive', drive_msg, queue_size = 1)
-		self.bridge = CvBridge()		
-		self.image_sub = rospy.Subscriber('/camera', Image, self.driveStop_car_callback)
-
-		self.flag_box = ((0,0),(0,0))
-		self.flag_center = (0,0)
-		self.flag_size = 0
-
+		rospy.init_node("potentialField")
+		self.data = None
 		self.cmd = drive_msg()
-		self.cmd.drive_angle = 0
-		self.cmd.velocity = 0
-	
-		self.min_value=0
-
-	def size_calc(self):
-		pix_width = self.flag_box[1][0] - self.flag_box[0][0]
-		pix_height = self.flag_box[1][1] - self.flag_box[0][1]	
-
-		self.box_size = pix_width*pix_height
-		#print(self.flag_box)
-	
-		    
-	def driveStop_car_callback(self,data):
-		try:
-	       		self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-     		except CvBridgeError as e:
-       			print(e)
-
-		while self.cv_image is None:
-			time.sleep(0.5)
-			print("sleeping")
-
-		self.flag_box = cd_color_segmentation(self.cv_image, show_image=False)
-		cv2.imshow("Image window", self.cv_image)
-    		cv2.waitKey(3)
-
-		self.size_calc()
+		self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.scan_callback) 
+		#self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback)
+		self.drive_pub = rospy.Publisher("/drive", drive_msg, queue_size=1)
 		
-		if self.box_size > 10000: 
-			mid_point = (self.flag_box[1][0] + self.flag_box[0][0])/2
-			#print(mid_point)
-			self.cmd.drive_angle = -(mid_point - 640) * (0.55)
-			if abs(self.cmd.drive_angle) > 255:
-				if self.cmd.drive_angle > 0:
-					self.cmd.drive_angle = 255
-				else:
-					self.cmd.drive_angle = -255
-			
-			self.cmd.velocity = 200
-		else:
-			self.cmd.drive_angle = 0
-			self.cmd.velocity = 0
+		self.cmd.velocity = 255
+		self.cmd.drive_angle = 0
+		
+		#cartesian points -- to be filled (tuples)
+		self.cartPoints = [None for x in range(720)]
+		
+		#[speed, angle]
+		self.finalVector = [100, 0]
+		self.max= 255
+
 	
-		self.pub.publish(self.cmd)
-                
+	def scan_callback(self, data):
+		'''Checks LIDAR data'''
+		self.data = data.ranges
+		self.convertPoints(self.data)
+		self.drive_callback()
+		self.drive_pub.publish(self.cmd)
 
+	def drive_callback(self):
+		'''Publishes drive commands'''
+		self.calcFinalVector(self.cartPoints)
+		self.cmd.velocity = self.finalVector[1]
+		self.cmd.drive_angle = self.finalVector[0]
 
-def main():
-	ic = driveStop()
-	rospy.init_node('driveStop')
-	try:
-		rospy.spin()
-		#ic.pub.publish(ic.cmd)
-	except KeyboardInterrupt:
-    		print("Shutting down")
-  		cv2.destroyAllWindows()
+	def convertPoints(self, points):
+		'''Convert all current LIDAR data to cartesian coordinates'''
+		for i in range(len(points)):
+			if (i>=0 and i <=40) or (i>=680 and i<=719):
+				x = 0.25/5 * round(math.sin(math.radians(i/2)),5)
+				y = 0.25/5 * round(math.cos(math.radians(i/2)),5)*-1
+			else:
+				if points[i] > 1.5:
+					x = 1.5/5 * round(math.sin(math.radians(i/2)),5)
+					y = 1.5/5 * round(math.cos(math.radians(i/2)),5)*-1
+				else:
+					x = points[i]/5 * round(math.sin(math.radians(i/2)),5)
+					y = points[i]/5 * round(math.cos(math.radians(i/2)),5)*-1
+			self.cartPoints[i]=(x,y)
+			
+	def calcFinalVector(self, points):
+		'''Calculate the final driving speed and angle'''
+		#a total force[x,y] from current data that will be added to the current velocity
+		force = [0, 0]
+		constant = 0.0002
+		
+		#checks if the data has been initialized
+		if self.data:
+			for pt in points:
+				x, y = pt
+				if x==0:
+					x = 0.1
+				if y==0: 
+					y = 0.1
+				weight = 1 #0.03/(x**2 + y**2)
+				force[0] += x *weight
+				force[1] += y *weight
 
+			print(force)
+			#force[0] = force[0] / 720 *(-1)
+			#force[1] = force[1] / 720 *(-1)
+				
+			#adjusts the sign depending if it will move backwards or forwards
+			speedSign = 1 if (force[1]) > 0 else -1
+			#pythagorean theorem to find magnitude
+			self.finalVector[1] = math.sqrt((force[0]**2 + force[1]**2)) * speedSign *255
+			#force[1] * (4)
+			#arctan to find angle (atan2 returns radians)
+			self.finalVector[0] =  -(math.degrees(math.atan2(force[1], force[0]))+90)/180 *180
+			#force[0] * 5
+			
+			if abs(self.finalVector[0]) > self.max:
+				if self.finalVector[0] > 0:
+					self.finalVector[0] = self.max
+				else:
+					self.finalVector[0] = -self.max
+			if abs(self.finalVector[1]) > self.max:
+				if self.finalVector[1] > 0:
+					self.finalVector[1] = self.max
+				else:
+					self.finalVector[1] = -self.max
+			print( self.finalVector)
+			#print(self.cartPoints[270])
 
 if __name__ == "__main__":
-	main()
+	try:
+		node = PotentialField()
+		rospy.spin()		
+		#while not rospy.is_shutdown():
+			#if AUTONOMOUS_MODE:
+		#	if self.joy_sub.buttons[5]==1
+		#		node.drive_pub.publish(node.cmd)
+		#		count+=1
+		#		print(AUTONOMOUS_MODE)
+	except rospy.ROSInterruptException:
+		exit()

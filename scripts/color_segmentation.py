@@ -17,8 +17,8 @@ def cd_color_segmentation(img, show_image=False):
 
     # define lower and upper bound of image values
     # TO DO!
-    low_range  = np.array( [115, 24, 105] ) 
-    high_range = np.array( [176, 169, 214] )
+    low_range  = np.array( [0, 92, 94] ) 
+    high_range = np.array( [255, 255, 248] )
 
     # create mask for image with overlapping values
     mask = cv2.inRange(new_img, low_range, high_range)

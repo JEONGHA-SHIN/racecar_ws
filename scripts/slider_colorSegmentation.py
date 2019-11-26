@@ -2,6 +2,33 @@ import cv2
 import numpy as np
 import argparse
 
+def gstreamer_pipeline(
+        capture_width=1280,
+        capture_height=720,
+        display_width=1280,
+        display_height=720,
+        framerate=60,
+        flip_method=0,
+):
+        return (
+                "nvarguscamerasrc ! "
+                "video/x-raw(memory:NVMM), "
+                "width=(int)%d, height=(int)%d, "
+                "format=(string)NV12, framerate=(fraction)%d/1 ! "
+                "nvvidconv flip-method=%d ! "
+                "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=(string)BGR ! appsink"
+                % (
+                        capture_width,
+                        capture_height,
+                        framerate,
+                        flip_method,
+                        display_width,
+                        display_height,
+                )
+    )
+
 ap = argparse.ArgumentParser()
 ap.add_argument("-s",
                 "--source",
@@ -190,6 +217,10 @@ def threshold_image():
     cv2.inRange(D.hue, D.thresholds["low_hue"], D.thresholds["high_hue"], D.hue_threshed)
     cv2.inRange(D.sat, D.thresholds["low_sat"], D.thresholds["high_sat"], D.sat_threshed)
     cv2.inRange(D.val, D.thresholds["low_val"], D.thresholds["high_val"], D.val_threshed)
+
+    print(D.hue_threshed)
+    print(D.sat_threshed)
+    print(D.val_threshed)
 
     #print "Threshes:"
     #print "Red:", D.thresholds["low_red"], D.thresholds["high_red"]
@@ -399,7 +430,7 @@ def handle_camera_data(data):
     
     # Reads in source for cam feed if specific source is passed in
     try:
-        cam = cv2.VideoCapture(args["source"]) 
+        cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER) 
 
     except:
         raise Exception("Pass in a video source")
