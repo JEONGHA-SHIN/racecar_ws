@@ -2,7 +2,7 @@
 This is set-up manual for unist racecar.  
 
 ## 0. Hardeware set up
-will be provided soon
+   will be provided soon
 
 ## 1. Configure jetson nano environment
 ### 1) Jetpack
@@ -18,13 +18,13 @@ will be provided soon
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
 
 ### 3) Add below scripts to the bash:
-   echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+    echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 
 
 ## 3. Install required ros packages:
 ### 1) rosserial
     sudo apt-get install ros-melodic-rosserial-arduino
-    sudo apt-get isntall ros-melodic-rosserial
+    sudo apt-get install ros-melodic-rosserial
 ### 2) Joystick node
     sudo apt-get install ros-melodic-joy
 
