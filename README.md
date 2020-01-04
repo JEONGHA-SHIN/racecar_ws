@@ -4,20 +4,55 @@ This is set-up manual for unist racecar.
 ## 0. Hardeware set up
 
 
-## 1. Install jetpack on micro sd-card
-follow below instructuion:
-<https://developer.nvidia.com/embedded/jetpack>
+## 1. Configure jetson nano environment
+### 1) Jetpack
+      <https://developer.nvidia.com/embedded/jetpack>
+### 2) Change Jetson nano power mode to 5W
+    sudo nvpmode -m1
 
 ## 2. Install ros on jetson nano
-  1) Install ros-melodic-desktop:
+### 1) Install ros-melodic-desktop:
   <http://wiki.ros.org/melodic/Installation/Ubuntu>
 
-  2) Configrure ros environment:  
+### 2) Configrure ros environment:  
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
 
-  3) Add below scripts to the bash:
-    gedit ~/.bashrc
+### 3) Add below scripts to the bash:
     source ~/catkin_ws/devel/setup.bash
+
+
+## 3. Install required ros packages:
+### 1) rosserial
+    sudo apt-get install ros-melodic-rosserial-arduino
+    sudo apt-get isntall ros-melodic-rosserial
+### 2) Joystick node
+    sudo apt-get install ros-melodic-joy
+
+
+## 4. Get source code in your catkin_ws dir(/home/user/catkin_ws/src/) and build
+    cd ~/catkin_ws/src/
+    git clone https://github.com/JEONGHA-SHIN/racecar_ws.git
+    git clone https://github.com/JEONGHA-SHIN/ydlidar_ros-X2.git
+    cd ~/catkin_ws && catkin_make
+
+
+## 5. Configure serial interface environment
+### 1) ydlidar
+      roscd ydlidar/startup
+      sudo chmod 777 ./*
+      sudo sh initenv.sh
+### 2) Arduino & joystick: Add following scripts to the bash:
+      sudo chmod 666 /dev/ttyACM0
+      sudo chmod a+rw /dev/input/js0
+      alias teleop='roslaunch racecar_ws teleop.launch'
+      
+## Test your car with teleop:
+    teleop
+      
+    
+    
+    
+    
       
 
       
