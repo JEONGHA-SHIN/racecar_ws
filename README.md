@@ -8,7 +8,7 @@ will be provided soon
 ### 1) Jetpack
   <https://developer.nvidia.com/embedded/jetpack>
 ### 2) Change Jetson nano power mode to 5W
-    sudo nvpmode -m1
+    sudo nvpmodel -m1
 
 ## 2. Install ros on jetson nano
 ### 1) Install ros-melodic-desktop:
@@ -18,7 +18,7 @@ will be provided soon
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
 
 ### 3) Add below scripts to the bash:
-    source ~/catkin_ws/devel/setup.bash
+   echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 
 
 ## 3. Install required ros packages:
@@ -42,9 +42,9 @@ will be provided soon
       sudo chmod 777 ./*
       sudo sh initenv.sh
 ### 2) Arduino & joystick: Add following scripts to the bash:
-      sudo chmod 666 /dev/ttyACM0
-      sudo chmod a+rw /dev/input/js0
-      alias teleop='roslaunch racecar_ws teleop.launch'
+      echo "sudo chmod 666 /dev/ttyACM0" >> ~/.bashrc
+      echo "sudo chmod a+rw /dev/input/js0" >> ~/.bashrc
+      echo "alias teleop='roslaunch racecar_ws teleop.launch'" >> ~/.bahsrc
       
 ## 6. Test your car with teleop:
     teleop
