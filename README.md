@@ -10,14 +10,15 @@ follow below instructuion:
 
 ## 2. Install ros on jetson nano
   1) Install ros-melodic-desktop:
-  
   <http://wiki.ros.org/melodic/Installation/Ubuntu>
 
   2) Configrure ros environment:  
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
 
   3) Add below scripts to the bash:
-### $ gedit ~/.bashrc
+###   gedit ~/.bashrc
       source ~/catkin_ws/devel/setup.bash
+      
+
       
       
