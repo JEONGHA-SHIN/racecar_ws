@@ -12,7 +12,7 @@ This is set-up manual for unist racecar.
 
 ## 2. Install ros on jetson nano
 ### 1) Install ros-melodic-desktop:
-  <http://wiki.ros.org/melodic/Installation/Ubuntu>
+ <http://wiki.ros.org/melodic/Installation/Ubuntu>
 
 ### 2) Configrure ros environment:  
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
@@ -46,7 +46,7 @@ This is set-up manual for unist racecar.
       sudo chmod a+rw /dev/input/js0
       alias teleop='roslaunch racecar_ws teleop.launch'
       
-## Test your car with teleop:
+## 6. Test your car with teleop:
     teleop
       
     
