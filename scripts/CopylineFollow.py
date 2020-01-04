@@ -21,6 +21,7 @@ class driveStop(object):
 	"""
 	def __init__(self):
 		self.pub = rospy.Publisher('/drive', drive_msg, queue_size = 1)
+		self.pub2 = rospy.Publisher('/camera2', Image, queue_size = 1)
 		self.bridge = CvBridge()		
 		self.image_sub = rospy.Subscriber('/camera', Image, self.driveStop_car_callback)
 
@@ -31,7 +32,7 @@ class driveStop(object):
 		self.cmd = drive_msg()
 		self.cmd.drive_angle = 0
 		self.cmd.velocity = 0
-                print("hello")	
+	
 		self.min_value=0
 
 	def size_calc(self):
@@ -39,11 +40,10 @@ class driveStop(object):
 		pix_height = self.flag_box[1][1] - self.flag_box[0][1]	
 
 		self.box_size = pix_width*pix_height
-		#print(self.flag_box)
+		print(self.flag_box)
 	
 		    
 	def driveStop_car_callback(self,data):
-                print("HHIHIHIHIHI")
 		try:
 	       		self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
      		except CvBridgeError as e:
@@ -61,24 +61,29 @@ class driveStop(object):
 		
 		if self.box_size > 10000: 
 			mid_point = (self.flag_box[1][0] + self.flag_box[0][0])/2
-			#print(mid_point)
 			self.cmd.drive_angle = -(mid_point - 640) * (0.8)
-			#if self.cmd.drive_angle>0:
-			#	self.cmd.drive_angle=200
-			#else:
-			#	self.cmd.drive_angle=200
 			if abs(self.cmd.drive_angle) > 255:
 				if self.cmd.drive_angle > 0:
 					self.cmd.drive_angle = 255
 				else:
 					self.cmd.drive_angle = -255
 			
-			self.cmd.velocity = 255
+			self.cmd.velocity = 150
 		else:
 			self.cmd.drive_angle = 0
 			self.cmd.velocity = 0
+		#self.pub_image=self.bridge.cv2_to_imgmsg(self.cv_image, "bgr8")
+		
+		msg = Image()
+		msg.height = self.cv_image.shape[0]
+		msg.width = self.cv_image.shape[1]
+        	msg.encoding = 'bgr8'
+		msg.is_bigendian = 0
+		msg.step = 3 * msg.width
+ 		msg.data = self.cv_image.flatten().tostring()
 	
 		self.pub.publish(self.cmd)
+		self.pub2.publish(msg)
                 
 
 

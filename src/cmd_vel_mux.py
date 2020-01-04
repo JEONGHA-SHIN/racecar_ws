@@ -16,7 +16,7 @@ def joy_callback(msg):
 
 	if msg.buttons[4] == 1:
 		mux_mode = 'gamepad' #LB >> joy
-		#print("mux_mode: gamepad")
+		print("mux_mode: gamepad")
 
 	elif msg.buttons[5] ==1:
 		mux_mode = 'autonomy' #RB >> auto

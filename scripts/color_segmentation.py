@@ -27,7 +27,7 @@ def cd_color_segmentation(img, show_image=False):
     filtered = cv2.bitwise_and(new_img, new_img, mask=mask)
 
     # find the contours in the image
-    _, contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     x1, y1, x2, y2 = 0, 0, 0, 0
     if len(contours) != 0:

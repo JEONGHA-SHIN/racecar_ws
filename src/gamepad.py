@@ -6,14 +6,14 @@ import rospy
 from sensor_msgs.msg import Joy
 from racecar_ws.msg import drive_msg
 
+print("HELLO")
+
 # gamepad callback
 def joy_callback(msg):
     global drive_pub, drive, X_SCALE, Y_SCALE
     drive = drive_msg()
-    
     if msg.buttons[1]==1:
 	drive.velocity = 0
-
     else: 
 	drive.drive_angle = 255*msg.axes[3] #left && right
 	drive.velocity = 255*msg.axes[1] #front && back
