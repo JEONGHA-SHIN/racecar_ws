@@ -2,11 +2,11 @@
 This is set-up manual for unist racecar.  
 
 ## 0. Hardeware set up
-
+will be provided soon
 
 ## 1. Configure jetson nano environment
 ### 1) Jetpack
-      <https://developer.nvidia.com/embedded/jetpack>
+  <https://developer.nvidia.com/embedded/jetpack>
 ### 2) Change Jetson nano power mode to 5W
     sudo nvpmode -m1
 
