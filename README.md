@@ -16,8 +16,8 @@ follow below instructuion:
   <http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment>
 
   3) Add below scripts to the bash:
-     gedit ~/.bashrc
-     source ~/catkin_ws/devel/setup.bash
+    gedit ~/.bashrc
+    source ~/catkin_ws/devel/setup.bash
       
 
       
